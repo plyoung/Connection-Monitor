@@ -108,6 +108,7 @@ namespace ConnectionMonitor
 		{
 			if (isRunning)
 			{
+				wasOnline = false;
 				isRunning = false;
 				playButton.Content = "";
 
@@ -214,7 +215,9 @@ namespace ConnectionMonitor
 		private void TimedEvent(object sender, EventArgs e)
 		{
 			bool online = false;
+			bool oneOrMoreError = false;
 			long ms = 0;
+			string res = "";
 
 			if (ip1 != null)
 			{
@@ -222,8 +225,14 @@ namespace ConnectionMonitor
 				{
 					online = true;
 					address1ResLabel.Content = ms + " ms";
+					res += "#";
 				}
-				else address1ResLabel.Content = "-error-";
+				else
+				{
+					oneOrMoreError = true;
+					address1ResLabel.Content = "-error-";
+					res += "x";
+				}
 			}
 
 			if (ip2 != null)
@@ -232,48 +241,58 @@ namespace ConnectionMonitor
 				{
 					online = true;
 					address2ResLabel.Content = ms + " ms";
+					res += "#";
 				}
-				else address2ResLabel.Content = "-error-";
+				else
+				{
+					oneOrMoreError = true;
+					address2ResLabel.Content = "-error-";
+					res += "x";
+				}
 			}
 
 			if (ip3 != null)
 			{
-				if (DoPing(ip2, out ms))
+				if (DoPing(ip3, out ms))
 				{
 					online = true;
-					address2ResLabel.Content = ms + " ms";
+					address3ResLabel.Content = ms + " ms";
+					res += "#";
 				}
-				else address2ResLabel.Content = "-error-";
+				else
+				{
+					oneOrMoreError = true;
+					address3ResLabel.Content = "-error-";
+					res += "x";
+				}
 			}
 
 			if (online)
 			{
-				if (!wasOnline)
-				{   
+				if (!wasOnline || oneOrMoreError)
+				{
 					wasOnline = true; // only update log if status changed
-					UpdateLog("[*] Online"); 
+					UpdateLog("[" + res + "] Online");
+
+					statusLabel.Content = "";
+					ni.Icon = System.Drawing.Icon.FromHandle(Properties.Resources.signal.GetHicon());
+					Uri iconUri = new Uri("pack://application:,,,/res/signal.png", UriKind.RelativeOrAbsolute);
+					this.Icon = BitmapFrame.Create(iconUri);
 				}
-
-				statusLabel.Content = "";
-
-				ni.Icon = System.Drawing.Icon.FromHandle(Properties.Resources.signal.GetHicon());
-				Uri iconUri = new Uri("pack://application:,,,/res/signal.png", UriKind.RelativeOrAbsolute);
-				this.Icon = BitmapFrame.Create(iconUri);
 			}
 			else
 			{
-				if (wasOnline)
+				if (wasOnline || oneOrMoreError)
 				{
 					wasOnline = false; // only update log if status changed
 					UpdateLog("[!] Connection Lost");
+
+					statusLabel.Content = "";
+
+					ni.Icon = System.Drawing.Icon.FromHandle(Properties.Resources.error.GetHicon());
+					Uri iconUri = new Uri("pack://application:,,,/res/error.png", UriKind.RelativeOrAbsolute);
+					this.Icon = BitmapFrame.Create(iconUri);
 				}
-
-				statusLabel.Content = "";
-
-				ni.Icon = System.Drawing.Icon.FromHandle(Properties.Resources.error.GetHicon());
-				Uri iconUri = new Uri("pack://application:,,,/res/error.png", UriKind.RelativeOrAbsolute);
-				this.Icon = BitmapFrame.Create(iconUri);
-
 			}
 		}
 
